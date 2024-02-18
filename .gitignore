@@ -39,3 +39,6 @@ poetry.lock
 pyproject.toml
 poetry.toml
 __pypackages__/
+
+# notes files
+note.txt
