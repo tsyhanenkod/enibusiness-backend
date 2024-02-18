@@ -3,7 +3,7 @@ from .views import *
 
 urlpatterns = [
     path('get_groups/', GetAllGroupsView.as_view(), name='get_groups'),
-    path('get_group/<pk:id>', GetGroupView.as_view(), name='get_group'),
+    path('get_group/<int:id>', GetGroupView.as_view(), name='get_group'),
     path('create/', CreateGroupView.as_view(), name='create_group'),
     path('edit/', EditGroupView.as_view(), name='edit_group'),
     path('delete/', DeleteGroupView.as_view(), name='delete_group'),

@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'apps.users',
     'apps.groups',
-    'apps.auth',
+    'apps.auth_system',
 ]
 
 MIDDLEWARE = [
