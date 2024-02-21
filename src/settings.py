@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'apps.users',
     'apps.groups',
     'apps.auth_system',
+    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
@@ -112,6 +113,21 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+
+AUTH_USER_MODEL = 'users.CustomUser'
+
+AUTHENTICATION_BACKENDS = [
+    'apps.users.backends.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+}
 
 
 # Internationalization
