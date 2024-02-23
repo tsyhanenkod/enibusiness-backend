@@ -79,6 +79,18 @@ class ChangePasswordView(GenericAPIView):
     
 
 class DeleteUserView(GenericAPIView):
-    def get(self, request):
-        return Response({}, status=status.HTTP_200_OK)
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        if request.user.is_staff:
+            return Response({'error': 'Admin can\'t delete account'}, status=status.HTTP_403_FORBIDDEN)
+        if not request.data.get('email'):
+            return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+        if not CustomUser.objects.filter(email=request.data.get('email')).exists():
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        try: 
+            user = get_object_or_404(CustomUser, email=request.data.get('email'))
+            user.delete()
+            return Response({'message': 'User deleted successfully'}, status=status.HTTP_200_OK)
+        except:
+            return Response({"error": "Something went wrong"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
