@@ -16,7 +16,7 @@ class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
     location = models.CharField(max_length=100, blank=True, null=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
-    image = models.ImageField(upload_to='', blank=True, null=True)
+    image = models.ImageField(upload_to='profile_images/', blank=True, null=True)
     reset_code = models.CharField(max_length=100, blank=True, null=True)
     user_groups = models.ManyToManyField(UserGroup, blank=True, null=True, related_name="user_groups")
     

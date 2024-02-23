@@ -34,15 +34,7 @@ class LoginSerializer(serializers.Serializer):
         email = attrs.get("email")
         password = attrs.get("password")
         
-        if not CustomUser.objects.filter(email=email).exists():
-            raise serializers.ValidationError("Email does not exist")
-        else: 
-            user = authenticate(email=email, password=password)
-            print(user)
-            if user is not None:
-                return attrs
-            else:
-                raise serializers.ValidationError("Wrong password")
+        return attrs
             
 
 class ForgotPasswordSerializer(serializers.Serializer):
@@ -53,10 +45,7 @@ class ForgotPasswordSerializer(serializers.Serializer):
     
     def validate(self, attrs):
         email = attrs.get("email")
-        
-        if not CustomUser.objects.filter(email=email).exists():
-            raise serializers.ValidationError("Email does not exist")
-        
+                
         return attrs
     
 

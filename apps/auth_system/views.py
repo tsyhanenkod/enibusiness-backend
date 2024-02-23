@@ -109,6 +109,8 @@ class LoginView(APIView):
             return Response({"error": "Password is required"}, status=status.HTTP_400_BAD_REQUEST)
         if len(request.data.get('password')) < 8:
             return Response({"error": "Password must be at least 8 characters long"}, status=status.HTTP_400_BAD_REQUEST)
+        if not CustomUser.objects.filter(email=request.data.get("email")).exists():
+            return Response({"error": "User with this email dosen't exist"}, status=status.HTTP_400_BAD_REQUEST)
         
         serializer = self.serializer_class(data=request.data)            
         if serializer.is_valid(raise_exception=True):
@@ -116,21 +118,30 @@ class LoginView(APIView):
             email = serializer.validated_data.get("email")
             user = CustomUser.objects.get(email=email)
             
-            token, created = Token.objects.get_or_create(user=user)
+            try:
+                user = authenticate(email=email, password=serializer.validated_data.get("password"))
+                
+                if user is None:
+                    return Response({"error": "Invalid password"}, status=status.HTTP_400_BAD_REQUEST)
+                else:           
+                    token, created = Token.objects.get_or_create(user=user)
+                
+                    user_data = {
+                        "first_name": user.first_name,
+                        "last_name": user.last_name,
+                        "email": user.email,
+                        "location": user.location,
+                        "phone_number": user.phone_number,
+                        "image": user.image.url if user.image else '',
+                        "token": token.key,
+                        "is_admin": user.is_staff,
+                    }
+                    
+                    return Response({"user": user_data, "message": "Login successful"}, status=status.HTTP_200_OK) 
+            except:
+                return Response({"error": "Invalid email or password"}, status=status.HTTP_400_BAD_REQUEST)
             
-            user_data = {
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "email": user.email,
-                "location": user.location,
-                "phone_number": user.phone_number,
-                "image": user.image.url if user.image else None,
-                "token": token.key
-            }
-            
-            return Response({"user": user_data, "message": "Login successful"}, status=status.HTTP_200_OK)
-        
-        return Response({"error": "Invalid data provided"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": serializer.errors.get('non_field_errors')[0]}, status=status.HTTP_400_BAD_REQUEST)
         
         
 class LogoutView(APIView):
@@ -171,7 +182,7 @@ class ForgotPasswordView(APIView):
                 user.save()
                 otp_code_mail(email, user.reset_code)
                 
-                request.session['reset_email'] = email
+                # request.session['reset_email'] = email
                 
                 return Response({"message": "Code sent to email successfuly"}, status=status.HTTP_200_OK)
             except:
