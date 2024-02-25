@@ -2,6 +2,7 @@ from rest_framework.generics import GenericAPIView
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
+from django.core.files.storage import default_storage
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
@@ -32,8 +33,11 @@ class EditUserView(GenericAPIView):
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
         if CustomUser.objects.filter(email=request.data.get('email')).exclude(email=request.user.email).exists():
             return Response({'error': 'Email already exists'}, status=status.HTTP_409_CONFLICT)
+        if not request.data.get('first_name') or not request.data.get('last_name') or not request.data.get('email') or not request.data.get('location') or not request.data.get('phone_number'):
+            return Response({'error': 'All fields are required'}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
+            print(request.data.get('first_name'), request.data.get('last_name'), request.data.get('email'), request.data.get('location'), request.data.get('phone_number'))
             user.first_name = request.data.get('first_name')
             user.last_name = request.data.get('last_name')
             user.email = request.data.get('email')
@@ -42,19 +46,58 @@ class EditUserView(GenericAPIView):
             user.save()
         
             user = {
-                "image": user.image.url,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
                 "email": user.email,
                 "location": user.location,
                 "phone_number": user.phone_number,
-                "is_staff": user.is_staff
             }
         
             return Response({"user": user, "message": "User data updated successfully"}, status=status.HTTP_200_OK)
         except:
             return Response({'error': 'Failed to update user data'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+
+class ProfileImageView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        if not user.image:
+            return Response({'error': 'Profile image not found'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({'image': user.image.url}, status=status.HTTP_200_OK)
+    
+    def post(self, request, *args, **kwargs):
+        user = get_object_or_404(CustomUser, email=request.user.email)
+        profile_image = request.FILES.get('image')
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        if not profile_image:
+            return Response({'error': 'Image is required'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            if request.user.image:
+                old_image_path = request.user.image.path
+                default_storage.delete(old_image_path)
+            if profile_image:
+                user.image = profile_image
+                user.save()
+            return Response({"image": user.image.url, 'message': 'Profile image updated successfully'}, status=status.HTTP_200_OK)
+        except:
+            return Response({'error': 'Failed to update profile image'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    def delete(self, request, *args, **kwargs):
+        user = request.user
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            if not user.image.path:
+                return Response({'error': 'Profile image not found'}, status=status.HTTP_404_NOT_FOUND)
+            default_storage.delete(user.image.path)
+            user.save()
+            return Response({'message': 'Profile image deleted successfully'}, status=status.HTTP_200_OK)
+        except:
+            return Response({'error': 'Failed to delete profile image'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class ChangePasswordView(GenericAPIView):
     permission_classes = [IsAuthenticated]
@@ -89,6 +132,8 @@ class DeleteUserView(GenericAPIView):
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
         try: 
             user = get_object_or_404(CustomUser, email=request.data.get('email'))
+            if user.image:
+                default_storage.delete(user.image.path)
             user.delete()
             return Response({'message': 'User deleted successfully'}, status=status.HTTP_200_OK)
         except:
