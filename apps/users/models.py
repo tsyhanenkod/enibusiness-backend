@@ -3,22 +3,17 @@ from django.contrib.auth.models import AbstractUser, Group, Permission
 from .managers import CustomUserManager
 import secrets
 
-
-class UserGroup(models.Model):
-    title = models.CharField(max_length=100, null=False)
-    description = models.CharField(max_length=250, null=True, blank=True)
-
-    def __str__(self):
-        return self.title
-
-
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
     location = models.CharField(max_length=100, blank=True, null=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     image = models.ImageField(upload_to='profile_images/', blank=True, null=True)
+    company_name = models.CharField(max_length=100, blank=True, null=True)
+    website = models.CharField(max_length=100, blank=True, null=True)
+    address = models.CharField(max_length=100, blank=True, null=True)
+    social_media = models.CharField(max_length=100, blank=True, null=True)
     reset_code = models.CharField(max_length=100, blank=True, null=True)
-    user_groups = models.ManyToManyField(UserGroup, blank=True, null=True, related_name="user_groups")
+    invited_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
     
     groups = models.ManyToManyField(Group, related_name='custom_user_groups', blank=True)
     user_permissions = models.ManyToManyField(Permission, related_name='custom_user_permissions', blank=True)

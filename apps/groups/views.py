@@ -6,6 +6,9 @@ from rest_framework.permissions import IsAuthenticated
 from .models import UserGroup
 from .serializers import GroupSerializer
 
+from django.db import IntegrityError
+from django.shortcuts import get_object_or_404
+
 
 class GetAllGroupsView(GenericAPIView):
     permission_classes = [IsAuthenticated]
@@ -56,18 +59,60 @@ class CreateGroupView(GenericAPIView):
     
 
 class EditGroupView(GenericAPIView):
-    def get(self, request):
-        return Response({}, status=status.HTTP_200_OK)
+    permission_classes = [IsAuthenticated]
+    serializer_class = GroupSerializer
+    
+    def put(self, request):
+        if not request.user.is_staff:
+            return Response({'error': 'This service is only for admin users'}, status=status.HTTP_403_FORBIDDEN)
+                
+        group = get_object_or_404(UserGroup, id=request.data.get('id'))
+        serializer = self.serializer_class(group, data=request.data, partial=True)
+        
+
+        if serializer.is_valid():
+            serializer.save()
+
+            serialized_group = self.serializer_class(group).data
+            return Response({'group': serialized_group, 'message': 'Group updated successfully'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'Failed to update group'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     
     
 class DeleteGroupView(GenericAPIView):
-    def get(self, request):
-        return Response({}, status=status.HTTP_200_OK)
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        group = UserGroup.objects.filter(id=request.data.get('id'))
+        if not request.user.is_staff:
+            return Response({'error': 'This service only for admin users'}, status=status.HTTP_403_FORBIDDEN)
+        if not group:
+            return Response({'error': 'Group not found'}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            group.delete()
+            return Response({'message': 'Group deleted successfully'}, status=status.HTTP_200_OK)
+        except:
+            return Response({'error': 'Failed to delete group'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     
 class AddUserToGroupView(GenericAPIView):
-    def get(self, request):
-        return Response({}, status=status.HTTP_200_OK)
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        if not request.user.is_staff:
+            return Response({'error': 'This service only for admin users'}, status=status.HTTP_403_FORBIDDEN)
+        
+        users = request.data.get('users')
+        group_id = request.data.get('group')
+        
+        
+        try:
+            group = UserGroup.objects.get(id=group_id)
+            group.users.add(*users)
+            return Response({"message": "Users added successfully"}, status=status.HTTP_200_OK)
+        except UserGroup.DoesNotExist:
+            return Response({"error": "Group not found"}, status=status.HTTP_404_NOT_FOUND)
+        except IntegrityError as e:
+            return Response({"error": f"IntegrityError: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     
 class RemoveUserFromGroupView(GenericAPIView):

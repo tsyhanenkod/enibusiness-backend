@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 
 from .models import CustomUser
-from .serializers import UserSerializer
+from .serializers import UserSerializer, BusinessDataSerializer
 
 
 class GetUsersView(GenericAPIView):
@@ -58,6 +58,23 @@ class EditUserView(GenericAPIView):
             return Response({'error': 'Failed to update user data'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
+class EditBusinessDataView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        user = request.user
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = BusinessDataSerializer(user, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"user": serializer.data, 'message': 'Business data updated successfully'}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+
 class ProfileImageView(GenericAPIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, *args, **kwargs):
@@ -93,6 +110,7 @@ class ProfileImageView(GenericAPIView):
             if not user.image.path:
                 return Response({'error': 'Profile image not found'}, status=status.HTTP_404_NOT_FOUND)
             default_storage.delete(user.image.path)
+            user.image = None
             user.save()
             return Response({'message': 'Profile image deleted successfully'}, status=status.HTTP_200_OK)
         except:

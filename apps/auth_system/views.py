@@ -125,6 +125,10 @@ class LoginView(APIView):
                     return Response({"error": "Invalid password"}, status=status.HTTP_400_BAD_REQUEST)
                 else:           
                     token, created = Token.objects.get_or_create(user=user)
+                    if user.image:
+                        image = user.image.url
+                    else: 
+                        image = ''
                 
                     user_data = {
                         "first_name": user.first_name,
@@ -132,7 +136,12 @@ class LoginView(APIView):
                         "email": user.email,
                         "location": user.location,
                         "phone_number": user.phone_number,
-                        "image": user.image.url if user.image else '',
+                        "image": image,
+                        "groups": user.groups.all(),
+                        "company_name": user.company_name,
+                        "website": user.website,
+                        "address": user.address,
+                        "social_media": user.social_media,
                         "token": token.key,
                         "is_admin": user.is_staff,
                     }
