@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.users.models import CustomUser
+from apps.users.models import CustomUser, Referal
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -12,3 +12,9 @@ class BusinessDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser  # Замените на вашу модель пользователя
         fields = ['company_name', 'website', 'address', 'social_media']
+        
+        
+class ReferalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Referal
+        fields = '__all__'

@@ -37,3 +37,14 @@ class TemporaryUser(models.Model):
 
     def __str__(self):
         return f'{self.first_name} {self.last_name} | {self.email} (temporary)'
+    
+
+class Referal(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    refered_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='refered_user')
+    project = models.CharField(max_length=250, blank=True, null=True)
+    amount = models.CharField(max_length=250, blank=True, null=True)
+    date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.user} refered {self.refered_user}'

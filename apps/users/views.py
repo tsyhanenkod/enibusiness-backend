@@ -7,8 +7,8 @@ from django.core.files.storage import default_storage
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 
-from .models import CustomUser
-from .serializers import UserSerializer, BusinessDataSerializer
+from .models import CustomUser, Referal
+from .serializers import UserSerializer, BusinessDataSerializer, ReferalSerializer
 
 
 class GetUsersView(GenericAPIView):
@@ -156,4 +156,76 @@ class DeleteUserView(GenericAPIView):
             return Response({'message': 'User deleted successfully'}, status=status.HTTP_200_OK)
         except:
             return Response({"error": "Something went wrong"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+        
+# referals
+class GetReferalsView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ReferalSerializer
+    
+    def get(self, request):
+        user = request.user
+        referals = Referal.objects.filter(user=user)
+        serializer = self.serializer_class(referals, many=True)
+        if serializer.data:
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'No referals found'}, status=status.HTTP_404_NOT_FOUND)
+
+    def post(self, request):
+        user = request.user
+        to_user_email = request.data.get('to_user')
+        project = request.data.get('project')
+        amount = request.data.get('amount')
+
+        to_user = CustomUser.objects.filter(email=to_user_email).first()
+
+        if not to_user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        data = {
+            'user': user.id,
+            'refered_user': to_user.id,
+            'project': project,
+            'amount': amount,
+        }
+
+        serializer = self.serializer_class(data=data)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            saved_referal = Referal.objects.get(id=serializer.data['id'])
+
+            return Response({
+                "referal": self.serializer_class(saved_referal).data,
+                "message": "Referral added successfully"
+            }, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+    def delete(self, request):
+        user = request.user
+        referal_id = request.data.get('id')
+        referal = Referal.objects.filter(user=user, id=referal_id).first()
+        if not referal:
+            return Response({'error': 'Referal not found'}, status=status.HTTP_404_NOT_FOUND)
+        referal.delete()
+        return Response({'message': 'Referal deleted successfully'}, status=status.HTTP_200_OK)
+    
+    
+    
+class GetReceivedReferalsView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ReferalSerializer
+    
+    def get(self, request):
+        user = request.user
+        referals = Referal.objects.filter(refered_user=user)
+        serializer = self.serializer_class(referals, many=True)
+        if serializer.data:
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'No referals found'}, status=status.HTTP_404_NOT_FOUND)
     
