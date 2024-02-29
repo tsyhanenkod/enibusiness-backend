@@ -16,8 +16,6 @@ class GetUsersView(GenericAPIView):
     serializer_class = UserSerializer
     
     def get(self, request):
-        if not request.user.is_staff:
-            return Response({'error': 'This service only for admin users'}, status=status.HTTP_403_FORBIDDEN)
         serializer = self.serializer_class(CustomUser.objects.all(), many=True)
         if serializer.data:
             return Response(serializer.data, status=status.HTTP_200_OK)

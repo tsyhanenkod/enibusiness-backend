@@ -14,8 +14,6 @@ class GetAllGroupsView(GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = GroupSerializer
     def get(self, request):
-        if not request.user.is_staff:
-            return Response({'error': 'This service only for admin users'}, status=status.HTTP_403_FORBIDDEN)
 
         groups = UserGroup.objects.all()
         serialized_groups = self.serializer_class(groups, many=True).data
@@ -27,8 +25,6 @@ class GetGroupView(GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = GroupSerializer
     def get(self, request, id):
-        if not request.user.is_staff:
-            return Response({'error': 'This service only for admin users'}, status=status.HTTP_403_FORBIDDEN)
         group = UserGroup.objects.filter(id=id)
         serialized_group = self.serializer_class(group, many=True).data
         
