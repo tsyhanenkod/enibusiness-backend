@@ -21,28 +21,6 @@ class SignupView(APIView):
     permission_classes = [IsAdminUser]
     
     def post(self, request):
-        first_name = request.data.get('first_name')
-        last_name = request.data.get('last_name')
-        email = request.data.get('email')
-        location = request.data.get('location')
-        phone = request.data.get('phone')
-        
-        if not first_name or first_name == '':
-            return Response({"error": "First name is required"}, status=status.HTTP_400_BAD_REQUEST)
-        if not last_name or last_name == '':
-            return Response({"error": "Last name is required"}, status=status.HTTP_400_BAD_REQUEST)
-        if not email or email == '':
-            return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
-        if not location or location == '':
-            return Response({"error": "Location is required"}, status=status.HTTP_400_BAD_REQUEST)
-        if not phone or phone == '':
-            return Response({"error": "Phone is required"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        if CustomUser.objects.filter(email=email).exists():
-            return Response({"error": "User with this email already exists"}, status=status.HTTP_400_BAD_REQUEST)
-        if TemporaryUser.objects.filter(email=email).exists():
-            return Response({"error": "User with this email already created by admin"}, status=status.HTTP_400_BAD_REQUEST)
-        
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):
             try:
@@ -50,22 +28,17 @@ class SignupView(APIView):
                 encoded_token = base64.b64encode(token.encode()).decode()
                 
                 user = TemporaryUser.objects.create(
-                    first_name=first_name, 
-                    last_name=last_name, 
-                    email=email, 
-                    location=location, 
-                    phone=phone, 
-                    token=token
+                    token=token,
+                    **serializer.validated_data
                 )
-                user.save()
                 
-                register_mail(email, encoded_token)
+                register_mail(user.email, encoded_token)
 
-                return Response({"message": "User created successfuly"}, status=status.HTTP_200_OK)
+                return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
             except:
                 return Response({"error": "Invalid data provided"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
-            return Response({"error": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Invalid data provided"}, status=status.HTTP_400_BAD_REQUEST)
         
 
 

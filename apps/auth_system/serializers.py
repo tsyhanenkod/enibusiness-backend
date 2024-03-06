@@ -1,26 +1,18 @@
 from rest_framework import serializers
-from apps.users.models import CustomUser
+from apps.users.models import CustomUser, TemporaryUser
 from django.contrib.auth import authenticate
 
 
-class SignupSerializer(serializers.Serializer):
-    first_name = serializers.CharField()
-    last_name = serializers.CharField()
-    email = serializers.EmailField()
-    location = serializers.CharField()
-    phone = serializers.CharField()
-    
+class SignupSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ["first_name", "last_name", "email", "location", "phone"]
-        
-    def validate(self, attrs):
-        first_name = attrs.get("first_name")        
-        last_name = attrs.get("last_name")
-        email = attrs.get("email")
-        location = attrs.get("location")
-        phone = attrs.get("phone")
-        
-        return attrs
+        model = TemporaryUser
+        fields = ['first_name', 'last_name', 'email', 'group', 'location', 'phone']
+        extra_kwargs = {
+            'last_name': {'required': False},
+            'location': {'required': False},
+            'group': {'required': False},
+            'phone': {'required': False},
+        }
 
 
 class LoginSerializer(serializers.Serializer):

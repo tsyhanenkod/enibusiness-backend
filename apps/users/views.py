@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 
 from .models import CustomUser, Referal
-from .serializers import UserSerializer, BusinessDataSerializer, ReferalSerializer
+from .serializers import UserSerializer, BusinessDataSerializer, ReferalSerializer, UserUpdateSerializer
 
 
 class GetUsersView(GenericAPIView):
@@ -25,35 +25,22 @@ class GetUsersView(GenericAPIView):
 class EditUserView(GenericAPIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
+        if not request.data.get('email'):
+            return Response({'error': 'Email can\'t be empty'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        if not request.data.get('first_name'):
+            return Response({'error': 'Email can\'t be empty'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
         user = get_object_or_404(CustomUser, email=request.user.email)
         if not user:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
-        if CustomUser.objects.filter(email=request.data.get('email')).exclude(email=request.user.email).exists():
-            return Response({'error': 'Email already exists'}, status=status.HTTP_409_CONFLICT)
-        if not request.data.get('first_name') or not request.data.get('last_name') or not request.data.get('email') or not request.data.get('location') or not request.data.get('phone_number'):
-            return Response({'error': 'All fields are required'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            print(request.data.get('first_name'), request.data.get('last_name'), request.data.get('email'), request.data.get('location'), request.data.get('phone_number'))
-            user.first_name = request.data.get('first_name')
-            user.last_name = request.data.get('last_name')
-            user.email = request.data.get('email')
-            user.location = request.data.get('location')
-            user.phone_number = request.data.get('phone_number')
-            user.save()
-        
-            user = {
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "email": user.email,
-                "location": user.location,
-                "phone_number": user.phone_number,
-            }
-        
-            return Response({"user": user, "message": "User data updated successfully"}, status=status.HTTP_200_OK)
-        except:
-            return Response({'error': 'Failed to update user data'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        serializer = UserUpdateSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"user": serializer.data, "message": "User data updated successfully"}, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     
 
 class EditBusinessDataView(GenericAPIView):

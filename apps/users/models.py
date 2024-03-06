@@ -29,8 +29,9 @@ class CustomUser(AbstractUser):
 
 class TemporaryUser(models.Model):
     first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100, null=True, blank=True)
     email = models.EmailField(unique=True)
+    group = models.CharField(max_length=5, null=True, blank=True)
     location = models.CharField(max_length=100, blank=True, null=True)
     phone = models.CharField(max_length=15, blank=True, null=True)
     token = models.CharField(max_length=100, unique=True, default=secrets.token_urlsafe)
