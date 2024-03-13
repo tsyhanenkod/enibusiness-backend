@@ -20,8 +20,6 @@ class CustomUserManager(BaseUserManager):
         
         if not first_name:
             raise ValueError(_('First name is required'))
-        if not first_name:
-            raise ValueError(_('Last name is required'))
 
         username, _ = email.split('@', 1)
         extra_fields['username'] = username

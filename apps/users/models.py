@@ -4,6 +4,7 @@ from .managers import CustomUserManager
 import secrets
 
 class CustomUser(AbstractUser):
+    last_name = models.CharField(max_length=100, blank=True, null=True)
     email = models.EmailField(unique=True)
     location = models.CharField(max_length=100, blank=True, null=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
@@ -38,6 +39,18 @@ class TemporaryUser(models.Model):
 
     def __str__(self):
         return f'{self.first_name} {self.last_name} | {self.email} (temporary)'
+
+
+class RequestedUser(models.Model):
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100, blank=True, null=True)
+    email = models.EmailField(unique=True)
+    location = models.CharField(max_length=100, blank=True, null=True)
+    phone = models.CharField(max_length=15, blank=True, null=True)
+    business = models.CharField(max_length=150, blank=True, null=True)
+
+    def __str__(self):
+        return f'{self.first_name} {self.last_name} | {self.email} (requested)'
     
 
 class Referal(models.Model):

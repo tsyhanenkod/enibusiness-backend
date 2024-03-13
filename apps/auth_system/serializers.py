@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.users.models import CustomUser, TemporaryUser
+from apps.users.models import CustomUser, TemporaryUser, RequestedUser
 from django.contrib.auth import authenticate
 
 
@@ -14,6 +14,12 @@ class SignupSerializer(serializers.ModelSerializer):
             'phone': {'required': False},
         }
 
+
+class RequestSignupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TemporaryUser
+        fields = '__all__'
+        exclude = ['business']
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -71,5 +77,11 @@ class SetNewPassSerializer(serializers.Serializer):
         email = attrs.get("email")
                 
         return attrs
+
+
+class RequestedUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RequestedUser
+        fields = '__all__'
         
         

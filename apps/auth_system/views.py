@@ -1,19 +1,114 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from apps.groups.models import UserGroup
 
-from .serializers import LoginSerializer, ForgotPasswordSerializer, OtpVerificationSerializer, SetNewPassSerializer, SignupSerializer
+from .serializers import (
+    LoginSerializer, 
+    ForgotPasswordSerializer, 
+    OtpVerificationSerializer, 
+    SetNewPassSerializer, 
+    SignupSerializer, 
+    RequestedUserSerializer,
+    RequestSignupSerializer
+)
 
-from apps.users.models import CustomUser, TemporaryUser
+from apps.users.models import CustomUser, TemporaryUser, RequestedUser
 from django.contrib.auth import authenticate
 
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.authtoken.models import Token
 
-from .utils import register_mail, otp_code_mail, generateOtp
+from .utils import (
+    register_mail, 
+    otp_code_mail, 
+    generateOtp,
+    request_signup_success,
+    request_signup_admin_nitification,
+    request_signup_rejected,
+)
 
 import secrets
 import base64
+
+
+class SignupRequestView(APIView):
+    serializer_class = RequestedUserSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            try:
+                user = RequestedUser.objects.create(
+                    **serializer.validated_data
+                )
+
+                request_signup_admin_nitification(user.email, user.first_name)
+
+                return Response({"message": "Request sent successfully"}, status=status.HTTP_200_OK)
+            except:
+                return Response({"error": "Invalid data provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SignupAcceptRequestView(APIView):
+    serializer_class = RequestSignupSerializer
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        try:
+            users = RequestedUser.objects.all()
+            user_list = list(users.values())
+
+            return Response({
+                "data": user_list, 
+                "message": "Request sent successfully"
+            }, status=status.HTTP_200_OK)
+        except:
+            return Response({"error": "Invalid data provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+    
+    def post(self, request):
+        try:
+            req_user_email = request.data.get('email')
+            req_user = RequestedUser.objects.get(email=req_user_email)
+
+            token = secrets.token_urlsafe()
+            encoded_token = base64.b64encode(token.encode()).decode()
+            
+            temp_user = TemporaryUser.objects.create(
+                token=token,
+                first_name=req_user.first_name,
+                last_name=req_user.last_name,
+                email=req_user.email,
+                location=req_user.location,
+                phone=req_user.phone
+            )
+
+            request_signup_success(temp_user.email, encoded_token)
+
+            req_user.delete()
+
+            return Response({"message": "Request user accepted successfully"}, status=status.HTTP_200_OK)
+        except RequestedUser.DoesNotExist:
+            return Response({"error": "Requested user does not exist."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request):
+        try:
+            user_id = request.data.get('id')
+            user = RequestedUser.objects.get(id=user_id)
+            
+            if not user:
+                return Response({"message": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+            request_signup_rejected(user.email)
+            user.delete()
+
+            return Response({"message": "Request user refected successfully"}, status=status.HTTP_200_OK)
+        except:
+            return Response({"error": "Invalid data provided"}, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class SignupView(APIView):
@@ -57,7 +152,7 @@ class SetPasswordView(APIView):
             if password != password2:
                 return Response({"error": "Passwords don't match"}, status=status.HTTP_400_BAD_REQUEST)
             else:
-                CustomUser.objects.create_user(
+                user = CustomUser.objects.create_user(
                     email=temp_user.email,
                     first_name=temp_user.first_name,
                     last_name=temp_user.last_name,
@@ -66,10 +161,16 @@ class SetPasswordView(APIView):
                     phone_number=temp_user.phone
                 )
 
+                if temp_user.group:
+                    group = UserGroup.objects.get(id=temp_user.group)
+                    group.users.add(user.id)
+
                 temp_user.delete()
+
                 return Response({"message": "Password set successfuly"}, status=status.HTTP_200_OK)
-        except:
-            return Response({"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"Error occurred: {e}")
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoginView(APIView):    

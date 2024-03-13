@@ -5,6 +5,9 @@ urlpatterns = [
     path('signup/', SignupView.as_view(), name='signup'),
     path('set_password/<str:token>/', SetPasswordView.as_view(), name='set_password'),
 
+    path('signup_request/', SignupRequestView.as_view(), name='signup_request'),
+    path('signup_request_accept/', SignupAcceptRequestView.as_view(), name='signup_request_accept'),
+
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
 
