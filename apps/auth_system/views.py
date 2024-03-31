@@ -43,7 +43,7 @@ class SignupRequestView(APIView):
                     **serializer.validated_data
                 )
 
-                request_signup_admin_nitification(user.email, user.first_name)
+                request_signup_admin_nitification(user.email, user.first_name, user.last_name, user.phone, user.location, user.business)
 
                 return Response({"message": "Request sent successfully"}, status=status.HTTP_200_OK)
             except:
@@ -223,9 +223,9 @@ class LoginView(APIView):
                     
                     return Response({"user": user_data, "message": "Login successful"}, status=status.HTTP_200_OK) 
             except:
-                return Response({"error": "Invalid email or password"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"message": "Invalid email or password"}, status=status.HTTP_400_BAD_REQUEST)
             
-        return Response({"error": serializer.errors.get('non_field_errors')[0]}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"message": serializer.errors.get('non_field_errors')[0]}, status=status.HTTP_400_BAD_REQUEST)
         
         
 class LogoutView(APIView):

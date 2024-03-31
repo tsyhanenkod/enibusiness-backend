@@ -56,9 +56,14 @@ def request_signup_rejected(email):
     send_mail(subject, message, email_from, recipient_list)
 
 
-def request_signup_admin_nitification(email, first_name):
+def request_signup_admin_nitification(email, first_name, last_name, phone, location, business):
     subject = f'ENI - Signup Request'
     message = f'''User {first_name} with email {email} sent signup request.\n
+    \nUser {first_name} {last_name}: 
+    \nEmail: {email}
+    \nPhone: {phone}
+    \nLocation: {location}
+    \nBusiness: {business}\n 
     \nAccept it or decline in Admin tools page\n
 
     \nAll the best, ENI App!\n

@@ -21,6 +21,8 @@ class BusinessDataSerializer(serializers.ModelSerializer):
         
         
 class ReferalSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    refered_user = UserSerializer()
     class Meta:
         model = Referal
         fields = '__all__'

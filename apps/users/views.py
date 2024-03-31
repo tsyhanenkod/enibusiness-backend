@@ -156,39 +156,35 @@ class GetReferalsView(GenericAPIView):
         if serializer.data:
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response({'error': 'No referals found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Referals not found'}, status=status.HTTP_404_NOT_FOUND)
 
     def post(self, request):
-        user = request.user
-        to_user_email = request.data.get('to_user')
-        project = request.data.get('project')
-        amount = request.data.get('amount')
+        user = request.user # is django model
+        eni = request.data.get('eni') # is bool
+        ref_name = request.data.get('ref_name') # is str
+        ref_contact = request.data.get('ref_contact') # is email
+        to_user = request.data.get('to_user') # is email
+        project = request.data.get('project') # is str
 
-        to_user = CustomUser.objects.filter(email=to_user_email).first()
+        refered_user = CustomUser.objects.filter(email=to_user).first()
+        if not refered_user:
+            return Response({'error': 'Refered user not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        if not to_user:
-            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            referal = Referal.objects.create(
+                eni=eni,
+                user=user,
+                name=ref_name,
+                contacts=ref_contact,
+                refered_user=refered_user,
+                project=project
+            )
 
-        data = {
-            'user': user.id,
-            'refered_user': to_user.id,
-            'project': project,
-            'amount': amount,
-        }
+            serializer = ReferalSerializer(referal)
 
-        serializer = self.serializer_class(data=data)
-
-        if serializer.is_valid():
-            serializer.save()
-
-            saved_referal = Referal.objects.get(id=serializer.data['id'])
-
-            return Response({
-                "referal": self.serializer_class(saved_referal).data,
-                "message": "Referral added successfully"
-            }, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except:
+            return Response({'error': "Can't create"}, status=status.HTTP_400_BAD_REQUEST)
         
     def delete(self, request):
         user = request.user

@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
 from .models import UserGroup
-from .serializers import GroupSerializer
+from .serializers import GroupSerializer, MyEniUsersSerialixer
 
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
@@ -29,6 +29,18 @@ class GetGroupView(GenericAPIView):
         serialized_group = self.serializer_class(group, many=True).data
         
         return Response({"groups": serialized_group}, status=status.HTTP_200_OK)
+
+
+class GetMyEniGroupsUsers(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = MyEniUsersSerialixer
+
+    def get(self, request):
+        user = self.request.user
+        user_groups = user.user_groups.all()
+        serialized_groups = self.serializer_class(user_groups, many=True).data
+        
+        return Response(serialized_groups, status=status.HTTP_200_OK)
     
     
 class CreateGroupView(GenericAPIView):

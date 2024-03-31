@@ -3,6 +3,7 @@ from .views import *
 
 urlpatterns = [
     path('get_groups/', GetAllGroupsView.as_view(), name='get_groups'),
+    path('get_my_eni_grops_users/', GetMyEniGroupsUsers.as_view(), name='get_my_eni_grops_users'),
     path('get_group/<int:id>', GetGroupView.as_view(), name='get_group'),
     path('create_group/', CreateGroupView.as_view(), name='create_group'),
     path('edit/', EditGroupView.as_view(), name='edit_group'),
