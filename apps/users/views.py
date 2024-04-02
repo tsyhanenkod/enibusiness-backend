@@ -177,7 +177,6 @@ class GetReferalsView(GenericAPIView):
                 name=ref_name,
                 contacts=ref_contact,
                 refered_user=refered_user,
-                project=project
             )
 
             serializer = ReferalSerializer(referal)

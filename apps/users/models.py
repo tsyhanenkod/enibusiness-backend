@@ -59,7 +59,7 @@ class Referal(models.Model):
     name = models.CharField(max_length=150, null=True, blank=True)
     contacts = models.CharField(max_length=150, null=True, blank=True)
     refered_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='refered_user')
-    project = models.CharField(max_length=250, blank=True, null=True)
+    project = models.CharField(max_length=250, blank=True, null=True) # now don't used
     amount = models.CharField(max_length=250, blank=True, null=True) # now don't used
     date = models.DateTimeField(auto_now_add=True)
 
